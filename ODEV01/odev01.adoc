@@ -1,0 +1,174 @@
+= Asciidoc ve PlantUML ÖDEVİ
+
+* uninitialized and initialized variables
+* range-based for loop
+* arrays that can shrink at run time (vector, ArrayList vb.) 
+* function parameters (arguments) pass-by-reference or pass-by-values (sayfa 96,97)
+* instance of a class 
+* const functions (C++)
+* use a "Compiler-generated default constructor"
+* use a "Copy constructor" 
+* default parameters - (Sayfa 76 ) - (Java'da kullanılamaz)
+* this for disambiguation (Sayfa 77)
+* static member variables (field, attributes) and Static functions and invocations (sayfda 89-90)
+* default access specifier for Class (Sayfa 92-93)
+* method overriding (sayfa 162)
+* virtual functions (sayfa 170) bir nesnenin sanal fonksiyonu çağırması ile sanal olmayan fonksiyonu çağırması arasındaki farkı gösterecek bir durumu gösteriniz. 
+* abstract class tanımlayın. 
+* pure virtual function (C++) ile bir fonksiyonun türetilme yapıldığında kesinlikle override edilmesini zorlayın. 
+* bir sınıfın veya methodun override edilmesine izin vermeyin. bunun yapılamadığını kod üzerinden gösterin.
+* composition ve agregation için iki veya daha fazla sınıf için örnek durumu kod üzerinden gösterin (Sayfa 192-197). (plantuml ile hem composition ve agregation gösterilmelidir.)
+* template veya generic Sınıf tanımlaması yapın. (Sayfa 211) 
+* template veya generic function gösterin
+* Sayfa 233 'de gösterildiği gibi kullandığınız dilin sunduğu hazır containerlardan 3-4 farklı çeşit değişkeni tanımladığınız sınıflarınızın içinde kullanın. 
+
+== Passing function arguments
+
+
+[source,cpp]
+----
+void gorevekle1(int x) { x = x + 1; }
+
+void gorevekle2(int &x) { x = x + 1; }
+
+void gorevekle3(int *x) { *x = *x + 1; } 
+
+int main() {
+    gorevekle1(y);
+    gorevekle2(y);
+    gorevekle3(&y);
+    cout << "Toplam Gorev :" << y << endl; 
+      return 0;
+}  
+----
+
+
+== Copy constructor
+
+
+[source,cpp]
+----
+class Point {
+private:
+    int x, y;
+public:
+    Point(int x1, int y1) {
+        x = x1;
+        y = y1;
+    } 
+    Point(const Point &p1) {
+        x = p1.x;
+        y = p1.y;
+    }
+
+    int getX() { return x; }
+
+    int getY() { return y; }
+};
+
+int main() {
+ int a = 10 , b=25;//initialized
+    Point p1(a, b); // constructor
+    Point p2 = p1;// Copy constructor
+    Point p3(p1);// Copy constructor
+    cout << "p1.x = " << p1.getX() << ", p1.y = " << p1.getY() << endl;
+    cout << "Toplam Adim : " << adim(p1.getX(), p1.getY()) << endl;
+    cout << "p2.x = " << p2.getX() << ", p2.y = " << p2.getY() << endl;
+    cout << "Toplam Adim : " << adim(p2.getX(), p2.getY()) << endl;
+    cout << "p3.x = " << p3.getX() << ", p3.y = " << p3.getY() << endl;
+    cout << "Toplam Adim : " << adim(p3.getX(), p3.getY()) << endl;
+         return 0;
+} 
+----
+
+== Default Parameters
+
+[source,cpp]
+----
+int adim(int x = 0, int y = 0, int z = 0) {
+
+    return (x + y + z);
+}
+
+int main() {
+ int toplamAdim; //uninitialized
+ cout<<"2. Gorev icin gerekli adim sayisi : "<<endl;
+    toplamAdim = adim(10, 15);
+    cout << "Toplam Adim : " << toplamAdim << endl;
+return 0;
+} 
+----
+
+== Method Overriding
+
+[source,cpp]
+----
+class Robot 
+{
+public:
+    virtual void Display() {
+        cout << "Ben bir robotum. " << endl;
+    }
+
+    void Show() {
+        cout << "Robotlari severim. " << endl;
+    }
+};
+
+class ParalelRobot : public Robot 
+{
+public:
+    
+    void Display() {
+        cout << "Ben bir Paralel Robotum" << endl;
+    }
+};
+
+int main() {
+    ParalelRobot dr;
+    Robot &bs = dr;
+    bs.Display();
+    dr.Show(); 
+    return 0;
+} 
+----
+
+== Abstract class
+
+
+[source,cpp]
+----
+class Robot2 
+{
+protected:
+    int x;
+public:
+    virtual void fun() = 0;
+
+    Robot2(int h) {
+        x = h;
+        cout << "Robot-urun uzakligi : "<<endl;
+    }
+};
+
+class MobilRobot : public Robot2 
+{
+    int y;
+public:
+    MobilRobot(int h, int w) : Robot2(h) { y = w; }
+
+    void fun() { cout << "x = " << x << ", y = " << y << '\n'; }
+};
+
+int main() {
+
+  cout<<"Robot 1"<<endl;
+    MobilRobot d(4, 5);
+    d.fun();
+    cout<<"Robot 2"<<endl;
+    Robot2 *ptr = new MobilRobot(6, 7);
+    ptr->fun(); 
+        return 0;
+}
+    
+----
