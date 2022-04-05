@@ -1,0 +1,180 @@
+= Ödev 2
+
+== Multi-thread safe singleton ile birlikte Object Pool uygulamasını multi-thread
+
+Multi-thread safe singleton ile birlikte Object Pool uygulamasını multi-thread olarak gerçeleştirin.
+A,B,C, CLASS vb. anlamsız isimlerle sınıf tasarımları kabul edilmeyecektir. 
+Sınıf isimleri gerçek dünyadan alınmalı ve neden Object Pool-Singleton kullanıldığının gerekçesi açıklanmalıdır. Bu açıklamalar asciidoc formatında hazırlanmalı ve kaynak kodlardan ilgili satırlar ile birlikte desteklenerek açıklanmalıdır. 
+Sınıflar ve aralarındaki ilişkiler için plantuml kodu ve resmi sisteme yüklenmelidir. 
+Kaynak kodlar gerçek dünyadaki gibi çalışmak zorunda değildir fakat fazla zaman işler için sleep vb. komutlarla bekleme yapabilir, gerçekleşen işleri ekranda yazdırabilirsiniz. Örneğin OpenGL ile render işleminin sonucunu ekranda bir pencerede göstermeniz zorunlu değildir, ekrana bir yazı ile yapılan işi yazdırabilirsiniz. 
+Kaynak kodlar derlenebilir ve çalıştırabilir olmalıdır. 
+
+Object Pool uygulaması için multi-thread çalışan bir kod geliştirmeniz beklenmektedir. Bu Object Pool aynı zamanda multi-thread safe Singleton uygulaması da yapılarak Singleton olarak tasarlanmalıdır. Object Pool içinde önceden hazırlanmış 10 tane nesne tutabilir veya istek geldikçe havuzunuzu doldurabilirsiniz. Fakat 10 taneden daha fazla nesneye izin verilmemelidir. 10 tane nesne kullanımda ise istekte bulunanların beklemesini sağlamanız gerekir. 15 tane ayrı thread başlatarak object pool istekte bulunun. Bu 15 thread içinden sadece 10 tanesi object pool dan nesne alabilecek ve kullanımdan sonra object pool geri bırakacaktır. 15 thread içinden nesne alamayan 5 tanesinin beklemesi sağlanmalı ve object pool nesne isteğine cevap verdiğinde çalışmaya devam etmeli ve sonlanmalıdır. 
+
+
+[uml,file="umlClass1.png"]
+--
+@startuml
+
+package Object.Pool.Design.Pattern { 
+
+class Resource
+{
+    int value;
+public:
+    Resource()
+    void reset()
+    int getValue()
+    void setValue(int number)
+}
+
+class ObjectPool
+{
+
+    std::list<Resource*> resources;
+    static ObjectPool* instance;
+    ObjectPool();
+    static ObjectPool* getInstance()
+    Resource* getResource()
+    void returnResource(Resource* object)
+  
+}
+class MainMenu
+{
+ObjectPool* pool = ObjectPool::getInstance();
+    Resource* first;
+    Resource* second;
+ }
+ 
+MainMenu --> Resource  
+MainMenu --> ObjectPool  
+Resource <--o ObjectPool  
+
+@enduml
+--  
+
+
+
+[source,cpp]
+----
+class Resource
+{
+    int value;
+public:
+    Resource()
+    {
+        value = 0;
+    }
+    void reset()
+    {
+        value = 0;
+    }
+    int getValue()
+    {
+        return value;
+    }
+    void setValue(int number)
+    {
+        value = number;
+    }
+};
+----
+
+
+[source,cpp]
+----
+class ObjectPool
+{
+private:
+    std::list<Resource*> resources;
+
+    static ObjectPool* instance;
+    ObjectPool() {}
+public:
+    /**
+
+* Sınıf örneğine erişmek için statik yöntem.
+* Singleton tasarım modelinin bir parçası.
+*
+* @return ObjectPool örneği.
+     */
+    static ObjectPool* getInstance()
+    {
+        if (instance == 0)
+        {
+            instance = new ObjectPool;
+        }
+        return instance;
+    }
+    /**
+    Kaynak örneğini döndürür.
+*
+* Tüm kaynaklar varsa yeni kaynak oluşturulacaktır.
+* istek sırasında kullanılmıştır.
+*
+* @return Kaynak örneği.
+     */
+    Resource* getResource()
+    {
+        if (resources.empty())
+        {
+            std::cout << "Creating new." << std::endl;
+            return new Resource;
+        }
+        else
+        {
+            std::cout << "Reusing existing." << std::endl;
+            Resource* resource = resources.front();
+            resources.pop_front();
+            return resource;
+        }
+    }
+    /**
+
+* Kaynağı havuza geri döndürün.
+*
+* Kaynak yeniden başlatılmalıdır
+* başkasından önce varsayılan ayarlar
+* kullanmaya çalışır.
+     *
+     * @param object Resource instance.
+     * @return void
+     */
+    void returnResource(Resource* object)
+    {
+        object->reset();
+        resources.push_back(object);
+    }
+};
+----
+
+[source,cpp]
+----
+ObjectPool* ObjectPool::instance = 0;
+int main()
+{
+    ObjectPool* pool = ObjectPool::getInstance();
+    Resource* first;
+    Resource* second;
+    /*
+Kaynaklar oluşturulacaksa. */
+    first = pool->getResource();
+    first->setValue(10);
+    std::cout << "first = " << first->getValue() << " [" << first << "]" << std::endl;
+    second = pool->getResource();
+    second->setValue(20);
+    std::cout << "second = " << second->getValue() << " [" << second << "]" << std::endl;
+    pool->returnResource(first);
+    pool->returnResource(second);
+    /*
+Kaynaklar yeniden kullanılacaktır.
+* Her iki kaynağın değerinin sıfıra sıfırlandığına dikkat edin.
+     */
+    first = pool->getResource();
+    std::cout << "first = " << first->getValue() << " [" << first << "]" << std::endl;
+    second = pool->getResource();
+    std::cout << "second = " << second->getValue() << " [" << second << "]" << std::endl;
+
+    return 0;
+}
+----
